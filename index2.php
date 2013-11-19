@@ -99,9 +99,7 @@ class Avatar
         imagettftext($im, $size, $angle, $x, $y, $color, $font, $this->char);
 
         imagetruecolortopalette($im, false, 255);
-        header('Content-Type: image/png');
-        imagepng($im);
-        //~ imagepng($im, $this->filename);
+        imagepng($im, $this->filename);
         imagedestroy($im);
     }
 

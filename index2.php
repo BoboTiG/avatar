@@ -1,10 +1,27 @@
 <?php
 
+/*
+ * https://github.com/BoboTiG/avatar
+ *
+ * Class to generate, and print, an avatar.
+ * The background color is defined by the CRC32 of the first argument (the remote address for instance).
+ * The letter used is the second argument.
+ *
+ * To retrieve the image, call this page with the 'l' GET parameter:
+ *      index2.php?l=T
+ */
 class Avatar
 {
 
+    private $char;
+    private $color;
+    private $diffs;
+    private $filename;
     private $length = 80;
 
+    /*
+     * Call: new Avatar($text);
+     */
     public function __construct($ip = '127.0.0.1', $letter = 'T')
     {
         $this->char = strtoupper($letter);
@@ -22,14 +39,21 @@ class Avatar
         $this->render();
     }
 
+    /*
+     * From an image resource, RGB values and a counter, this method will
+     * calculate the appropriate color for a given square of the avatar.
+     */
     private function color($im, $r, $g, $b, $i) {
-        $i *= 3;  // 5 pour 120px
-        $r = $r + $this->diffs[0] * $i;
-        $g = $g + $this->diffs[1] * $i;
-        $b = $b + $this->diffs[2] * $i;
+        $i *= $this->length == 80 ? 3 : 5;
+        $r = floor($r + $this->diffs[0] * $i);
+        $g = floor($g + $this->diffs[1] * $i);
+        $b = floor($b + $this->diffs[2] * $i);
         return imagecolorallocate($im, $r, $g, $b);
     }
 
+    /*
+     * Generate the avatar image and store it into $this->filename file.
+     */
     private function create_thumb()
     {
         $s = $this->length / 4;
@@ -38,9 +62,9 @@ class Avatar
         $g = hexdec($g_);
         $b = hexdec($b_);
         $this->diffs = array(
-            (255 - $r) / $this->length,
-            (255 - $g) / $this->length,
-            (255 - $b) / $this->length
+            floor((255 - $r) / $this->length),
+            floor((255 - $g) / $this->length),
+            floor((255 - $b) / $this->length)
         );
         $i = 16;
 
@@ -83,14 +107,14 @@ class Avatar
         $dim = imagettfbbox($size, $angle, $font, $this->char);
         $letter_width = max($dim[0], $dim[2], $dim[4], $dim[6]);
         $letter_height = min($dim[1], $dim[3], $dim[5], $dim[7]);
-        $x = ($this->length - $letter_width) / 2; $x += 2;
-        $y = ($this->length - $letter_height) / 2;
+        $x = floor(($this->length - $letter_width) / 2); $x += 2;
+        $y = floor(($this->length - $letter_height) / 2);
         // Shadow
         $rgb = 222;
         $shadow = 33;
         if ( ($r + $g + $b) / 3 < 127 ) {
-                $rgb = 33;
-                $shadow = 222;
+            $rgb = 33;
+            $shadow = 222;
         }
         $color = imagecolorallocate($im, $rgb, $rgb, $rgb);
         imagettftext($im, $size, $angle, $x-1, $y-1, $color, $font, $this->char);
@@ -103,6 +127,9 @@ class Avatar
         imagedestroy($im);
     }
 
+    /*
+     * Print an image. Use of cache.
+     */
     private function render()
     {
         header('Content-Type: image/png');
